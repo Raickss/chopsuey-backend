@@ -14,12 +14,12 @@ import { PostgresConfigService } from "src/config/database/postgres/config.servi
           username: PostgresConfigService.username,
           password: PostgresConfigService.password,
           database: PostgresConfigService.database,
-          entities: [__dirname + '/../../../../entities/*.entity{.ts,.js}'],
-          synchronize: true,
+          entities: [__dirname + '/../../../../**/*.entity.ts'],
+          synchronize: true
         }),
         inject: [PostgresConfigService],
       } as TypeOrmModuleAsyncOptions),
     ],
   })
 
-export class PostgresProviderModule {}
+export class PostgresProviderModule {} 

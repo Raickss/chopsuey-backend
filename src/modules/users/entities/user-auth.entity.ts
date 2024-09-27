@@ -8,17 +8,20 @@ import {
 import { User } from './user.entity';
 
 @Entity('user_auth')
-export class UsersAuth {
+export class UserAuth {
     @PrimaryGeneratedColumn()
     id: number;
 
     @OneToOne(() => User)
     @JoinColumn({ name: 'userId' })
-    employee: User;
+    user: User; 
 
     @Column({ type: 'varchar', length: 50, unique: true })
     userName: string;
 
     @Column({ type: 'varchar' })
     password: string;
+
+    @Column({ type: 'boolean', default: true })
+    isActive: boolean;
 }
