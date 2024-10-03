@@ -5,12 +5,16 @@ import { AppService } from './app.service';
 import { AppConfigModule } from './config/app/config.module';
 import { PostgresProviderModule } from './providers/database/postgres/provider.module';
 import { UsersModule } from './modules/users/users.module';
+import { AuthModule } from './authentication/auth.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
     AppConfigModule,
+    AuthModule,
     PostgresProviderModule,
-    UsersModule
+    UsersModule,
+    MailModule
   ],
   controllers: [AppController],
   providers: [AppService],

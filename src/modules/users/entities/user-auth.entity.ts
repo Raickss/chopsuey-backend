@@ -17,7 +17,7 @@ export class UserAuth {
     user: User; 
 
     @Column({ type: 'varchar', length: 50, unique: true })
-    userName: string;
+    username: string;
 
     @Column({ type: 'varchar' })
     password: string;
