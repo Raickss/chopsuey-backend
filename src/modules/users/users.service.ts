@@ -7,6 +7,7 @@ import { UserAuth } from './entities/user-auth.entity';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { MailService } from 'src/mail/mail.service';
+import { Role } from './entities/role.entity';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +17,9 @@ export class UsersService {
 
         @InjectRepository(UserAuth)
         private readonly userAuthRepository: Repository<UserAuth>,
+
+        @InjectRepository(Role)
+        private readonly roleRepository: Repository<Role>,
 
         private readonly mailService: MailService
     ) { }
@@ -61,7 +65,7 @@ export class UsersService {
                 user: savedUser,
                 isActive: true,
             });
-            
+
             await userAuthRepository.save(newUserAuth);
             await this.sendAccessEmail(createUserDto.email, username, generatedPassword);
 
@@ -142,12 +146,25 @@ export class UsersService {
         try {
             const userAuth = await this.userAuthRepository.findOne({
                 where: { username: username },
-                relations: ['user'],
+                relations: ['user', 'user.role', 'user.role.rolePermissions', 'user.role.rolePermissions.permission'],
             });
             return userAuth ? userAuth : undefined;
         } catch (error) {
             throw new InternalServerErrorException('Database query failed');
         }
+    }
+
+    async getPermissionsByRole(roleId: number): Promise<string[]> {
+        const role = await this.roleRepository.findOne({
+          where: { id: roleId },
+          relations: ['rolePermissions', 'rolePermissions.permission'],
+        });
+    
+        if (!role) {
+          throw new Error(`Role with ID ${roleId} not found`);
+        }
+    
+        return role.rolePermissions.map(rp => rp.permission.permissionName);
     }
 
 }

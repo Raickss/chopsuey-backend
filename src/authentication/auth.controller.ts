@@ -14,7 +14,6 @@ export class AuthController {
   ) {
     const { username, password } = loginDto;
     const user = await this.authService.validateUser(username, password);
-
     if (!user) {
       throw new BadRequestException('Credenciales invalidas');
     }
