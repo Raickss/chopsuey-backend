@@ -3,8 +3,10 @@ import {
     PrimaryGeneratedColumn,
     ManyToOne
 } from "typeorm";
-import { Role } from "./role.entity";
-import { Permission } from "./permission.entity";
+
+import { Permission } from "../permissions/permission.entity";
+import { Role } from "../roles/role.entity";
+
 
 @Entity('role_permission')
 export class RolePermission{

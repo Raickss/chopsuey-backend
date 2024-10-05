@@ -1,13 +1,15 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dtos/createUser.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
-import { UserAuth } from './entities/user-auth.entity';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { MailService } from 'src/mail/mail.service';
-import { Role } from './entities/role.entity';
+import { User } from './entities/user.entity';
+import { UserAuth } from '../users-auth/user-auth.entity';
+import { Role } from '../roles/role.entity';
+
+
 
 @Injectable()
 export class UsersService {
@@ -17,9 +19,6 @@ export class UsersService {
 
         @InjectRepository(UserAuth)
         private readonly userAuthRepository: Repository<UserAuth>,
-
-        @InjectRepository(Role)
-        private readonly roleRepository: Repository<Role>,
 
         private readonly mailService: MailService
     ) { }
@@ -142,29 +141,18 @@ export class UsersService {
         return await this.userRepository.find();
     }
 
-    async getUserByUsername(username: string): Promise<UserAuth | undefined> {
+    async getUserByUsername(username: string): Promise<UserAuth | null> {
         try {
             const userAuth = await this.userAuthRepository.findOne({
-                where: { username: username },
+                where: { username },
                 relations: ['user', 'user.role', 'user.role.rolePermissions', 'user.role.rolePermissions.permission'],
             });
-            return userAuth ? userAuth : undefined;
+            
+            // Retorna null si el usuario no existe
+            return !userAuth ? null : userAuth;
         } catch (error) {
-            throw new InternalServerErrorException('Database query failed');
+            throw new InternalServerErrorException('La consulta a la base de datos falló.');
         }
-    }
-
-    async getPermissionsByRole(roleId: number): Promise<string[]> {
-        const role = await this.roleRepository.findOne({
-          where: { id: roleId },
-          relations: ['rolePermissions', 'rolePermissions.permission'],
-        });
-    
-        if (!role) {
-          throw new Error(`Role with ID ${roleId} not found`);
-        }
-    
-        return role.rolePermissions.map(rp => rp.permission.permissionName);
     }
 
 }

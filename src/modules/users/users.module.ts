@@ -3,9 +3,9 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { UserAuth } from './entities/user-auth.entity';
 import { MailModule } from 'src/mail/mail.module';
-import { Role } from './entities/role.entity';
+import { UserAuth } from '../users-auth/user-auth.entity';
+import { Role } from '../roles/role.entity';
 
 @Module({
   imports: [

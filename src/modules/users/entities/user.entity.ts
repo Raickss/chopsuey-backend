@@ -8,7 +8,8 @@ import {
 } from "typeorm";
 import { DocumentType } from "../enums/document-type.enum";
 import { Gender } from "../enums/gender.enum";
-import { Role } from "./role.entity";
+import { Role } from "src/modules/roles/role.entity";
+
 
 @Entity('user')
 export class User {
