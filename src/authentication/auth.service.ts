@@ -1,58 +1,103 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from 'src/modules/users/users.service';
 import { UserAuthDto } from './dtos/user-auth.dto';
+import { AuthDto } from './dtos/auth.dto';
+import { PermissionsService } from 'src/modules/permissions/permissions.service';
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
+        private permissionsService: PermissionsService,
         private jwtService: JwtService,
     ) { }
-    async login(user: UserAuthDto) {
-        const payload = { username: user.username, sub: user.userId, role: user.role, permissions: user.permissions };
-
-        const accessToken = this.jwtService.sign(payload, {
-            secret: process.env.ACCESS_TOKEN_SECRET,
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRATION || '15m',
-        });
-
-        const refreshToken = this.jwtService.sign({ sub: user.userId }, {
-            secret: process.env.REFRESH_TOKEN_SECRET,
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRATION || '7d',
-        });
-
-        return {
-            access_token: accessToken,
-            refresh_token: refreshToken,
-        };
+    
+    async signIn(data: AuthDto) {
+        const user = await this.validateUserCredentials(data.username, data.password);
+        const tokens = await this.getTokens(
+            user.userId,
+            user.username,
+            user.role,
+            user.permissions
+        );
+        return tokens;
     }
-    async validateUser(username: string, pass: string): Promise<UserAuthDto | null> {
-        const userAuth = await this.usersService.getUserByUsername(username);
 
-        if (userAuth && userAuth.isActive && (await bcrypt.compare(pass, userAuth.password))) {
-            const { password, ...userWithoutPassword } = userAuth;
-
+    async validateUserCredentials(username: string, password: string): Promise<UserAuthDto | null> {
+        try {
+            const userAuth = await this.usersService.getUserByUsername(username);
+            if (!userAuth) {
+                throw new NotFoundException('Usuario no encontrado.');
+            }
+            
+            if (!userAuth.isActive) {
+                throw new UnauthorizedException('La cuenta del usuario no está activa.');
+            }
+            
+            const isPasswordValid = await bcrypt.compare(password, userAuth.password);
+            if (!isPasswordValid) {
+                throw new UnauthorizedException('Contraseña incorrecta.');
+            }
+            
+            const { password: _, ...userWithoutPassword } = userAuth;
+            
             // Verificar si el usuario tiene un rol asignado
             if (!userWithoutPassword.user.role) {
                 throw new UnauthorizedException('El usuario aun no tiene rol asignado.');
             }
-
+            
             // Obtener los permisos del rol del usuario
-            const permissions = await this.usersService.getPermissionsByRole(userWithoutPassword.user.role.id);
-
+            const permissions = await this.permissionsService.getPermissionsByRole(userWithoutPassword.user.role.id);
+            
             // Retorna el usuario junto con los permisos
             return {
                 username: userWithoutPassword.username,
                 userId: userWithoutPassword.user.id,
                 role: userWithoutPassword.user.role.roleName,
                 permissions: permissions,
-                isActive: userWithoutPassword.isActive
+                isActive: userWithoutPassword.isActive,
             };
+        } catch (error) {
+            if (error instanceof NotFoundException || error instanceof UnauthorizedException) {
+                throw error;
+            }
+            throw new InternalServerErrorException('Error al validar el usuario.');
         }
-
-        return null;
     }
 
+    async getTokens(id: number, username: string, role: string, permissions: string[]){
+        const [ accessToken, refreshToken ] = await Promise.all([
+            this.jwtService.signAsync(
+                {
+                    username: username,
+                    sub: id,
+                    role: role,
+                    permissions: permissions
+                },
+                {
+                    secret: process.env.ACCESS_TOKEN_SECRET,
+                    expiresIn: '15m'
+                }
+            ),
+            this.jwtService.signAsync(
+                {
+                    username: username,
+                    sub: id,
+                    role: role,
+                    permissions: permissions
+                },
+                {
+                    secret: process.env.REFRESH_TOKEN_SECRET,
+                    expiresIn: '7d'
+                }
+            )
+        ]);
+
+        return {
+            accessToken,
+            refreshToken
+        }
+    }
 }
