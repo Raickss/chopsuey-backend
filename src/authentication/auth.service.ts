@@ -3,11 +3,8 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from 'src/modules/users/users.service';
 import { UserAuthDto } from './dtos/user-auth.dto';
-<<<<<<< HEAD
-import { AuthDto } from './dtos/auth.dto';
-=======
->>>>>>> f23a56b1357c66889ca06a33ca880625bb55cfd9
 import { PermissionsService } from 'src/modules/permissions/permissions.service';
+import { AuthDto } from './dtos/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -53,11 +50,7 @@ export class AuthService {
             
             // Obtener los permisos del rol del usuario
             const permissions = await this.permissionsService.getPermissionsByRole(userWithoutPassword.user.role.id);
-<<<<<<< HEAD
             
-=======
-
->>>>>>> f23a56b1357c66889ca06a33ca880625bb55cfd9
             // Retorna el usuario junto con los permisos
             return {
                 username: userWithoutPassword.username,
