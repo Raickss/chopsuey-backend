@@ -6,11 +6,22 @@ import { JwtModule } from '@nestjs/jwt';
 import { AccessTokenStrategy } from './strategies/access-token.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { PermissionsModule } from 'src/modules/permissions/permissions.module';
+import { RolesPermissionsModule } from 'src/modules/roles-permissions/roles-permissions.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ResetToken } from './entities/reset-token.entity';
+import { MailModule } from 'src/mail/mail.module';
 @Module(
   {
     imports: [
       UsersModule,
       PermissionsModule,
+      RolesPermissionsModule,
+      MailModule,
+      TypeOrmModule.forFeature(
+        [
+          ResetToken
+        ]
+      ),
       JwtModule.register({})
     ],
     controllers: [AuthController],

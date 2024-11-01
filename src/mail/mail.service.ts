@@ -40,4 +40,28 @@ export class MailService {
             console.error(`Error al enviar correo a ${options.to}:`, error);
         }
     }
+    async sendResetPasswordEmail(email: string, resetLink: string): Promise<void> {
+        const subject = 'Restablecimiento de contraseña';
+        const textContent = `Hola,
+
+        Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para cambiar tu contraseña:
+
+        ${resetLink}
+
+        Si no solicitaste este cambio, ignora este correo.`;
+
+        const htmlContent = `
+        <p>Hola,</p>
+        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para cambiar tu contraseña:</p>
+        <p><a href="${resetLink}">${resetLink}</a></p>
+        <p>Si no solicitaste este cambio, ignora este correo.</p>
+      `;
+
+        await this.sendEmail({
+            to: email,
+            subject,
+            text: textContent,
+            html: htmlContent,
+        });
+    }
 }
