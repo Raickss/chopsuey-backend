@@ -9,7 +9,7 @@ import {
 import { DocumentType } from '../enums/document-type.enum';
 import { Gender } from '../enums/gender.enum';
 
-export class CreateUserDto {
+export class userDto {
   
   @IsEnum(DocumentType, { message: 'El tipo de documento debe ser uno de los siguientes valores: RC, TI, CC, TE, CE, NIT, PP, PEP, DIE, NUIP, FOREIGN_NIT' })
   documentType: DocumentType;

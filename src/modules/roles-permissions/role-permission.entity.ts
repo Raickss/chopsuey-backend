@@ -13,9 +13,9 @@ export class RolePermission{
     @PrimaryGeneratedColumn()
     id: number;
 
-    @ManyToOne(() => Role)
-    role: Role;
+    @ManyToOne(() => Role, (role) => role.rolePermissions, { eager: true })
+  role: Role;
 
-    @ManyToOne(() => Permission)
-    permission: Permission;
+  @ManyToOne(() => Permission, (permission) => permission.rolePermissions, { eager: true })
+  permission: Permission;
 }

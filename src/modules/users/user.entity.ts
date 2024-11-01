@@ -4,11 +4,14 @@ import {
     Column,
     ManyToOne,
     CreateDateColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
+    OneToMany,
+    OneToOne
 } from "typeorm";
-import { DocumentType } from "../enums/document-type.enum";
-import { Gender } from "../enums/gender.enum";
+import { DocumentType } from "./enums/document-type.enum"; 
+import { Gender } from "./enums/gender.enum"; 
 import { Role } from "src/modules/roles/role.entity";
+import { ResetToken } from "src/auth/entities/reset-token.entity";
 
 
 @Entity('user')
@@ -49,12 +52,27 @@ export class User {
     @Column({ type: 'date', nullable: true })
     birthDate: Date;
 
-    @ManyToOne(() => Role, (role) => role.authUsers)
+    @ManyToOne(() => Role, (role) => role.users)
     role: Role;
+
+    @Column({ type: 'varchar', length: 50, unique: true })
+    username: string;
+
+    @Column({ type: 'varchar' })
+    password: string;
+
+    @Column({ type: 'boolean', default: true })
+    isActive: boolean;
 
     @CreateDateColumn({ type: 'timestamp' })
     createTime: Date;
 
     @UpdateDateColumn({ type: 'timestamp' })
     updateTime: Date;
+
+    @Column({ type: 'varchar', nullable: true })
+    refreshToken: string;
+
+    @OneToMany(() => ResetToken, (resetToken) => resetToken.user)
+    resetTokens: ResetToken[];
 }
