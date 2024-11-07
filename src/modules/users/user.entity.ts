@@ -5,13 +5,12 @@ import {
     ManyToOne,
     CreateDateColumn,
     UpdateDateColumn,
-    OneToMany,
-    OneToOne
+    OneToMany
 } from "typeorm";
 import { DocumentType } from "./enums/document-type.enum"; 
 import { Gender } from "./enums/gender.enum"; 
 import { Role } from "src/modules/roles/role.entity";
-import { ResetToken } from "src/auth/entities/reset-token.entity";
+import { UserResetPasswordCode } from "src/auth/entities/user-reset-password.entity";
 
 
 @Entity('user')
@@ -73,6 +72,6 @@ export class User {
     @Column({ type: 'varchar', nullable: true })
     refreshToken: string;
 
-    @OneToMany(() => ResetToken, (resetToken) => resetToken.user)
-    resetTokens: ResetToken[];
+    @OneToMany(() => UserResetPasswordCode, (resetPasswordCode) => resetPasswordCode.user)
+    resetPasswordCodes: UserResetPasswordCode[];
 }

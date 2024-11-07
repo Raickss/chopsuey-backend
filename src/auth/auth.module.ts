@@ -8,8 +8,8 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 import { PermissionsModule } from 'src/modules/permissions/permissions.module';
 import { RolesPermissionsModule } from 'src/modules/roles-permissions/roles-permissions.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ResetToken } from './entities/reset-token.entity';
 import { MailModule } from 'src/mail/mail.module';
+import { UserResetPasswordCode } from './entities/user-reset-password.entity';
 @Module(
   {
     imports: [
@@ -19,7 +19,7 @@ import { MailModule } from 'src/mail/mail.module';
       MailModule,
       TypeOrmModule.forFeature(
         [
-          ResetToken
+          UserResetPasswordCode
         ]
       ),
       JwtModule.register({})
