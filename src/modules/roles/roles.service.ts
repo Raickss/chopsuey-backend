@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from './role.entity';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateRoleDto } from './dtos/create-role.dto';
 import { UpdateRoleDto } from './dtos/update-role.dto';
 
@@ -13,16 +13,30 @@ export class RolesService {
   ) { }
 
   async findAll(): Promise<Role[]> {
-    return this.rolesRepository.find();
-  }
+    return this.rolesRepository.find({
+      relations: ['rolePermissions', 'rolePermissions.permission'],
+    });
+  }  
 
   async findOne(id: number): Promise<Role> {
-    const role = await this.rolesRepository.findOne({ where: { id } });
+    const role = await this.rolesRepository.findOne({
+      where: { id },
+      relations: ['rolePermissions', 'rolePermissions.permission'],
+    });
+
     if (!role) {
       throw new NotFoundException(`Rol con ID ${id} no encontrado.`);
     }
+
     return role;
   }
+  async findByRoleName(roleName: string): Promise<Role | null> {
+    return await this.rolesRepository.findOne({
+        where: { roleName },
+        relations: ['rolePermissions', 'rolePermissions.permission'], // Incluir relaciones necesarias
+    });
+}
+
 
   async create(data: CreateRoleDto): Promise<Role> {
     const newRole = this.rolesRepository.create(data);

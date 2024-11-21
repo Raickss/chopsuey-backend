@@ -9,7 +9,7 @@ import { HttpAdapterHost } from '@nestjs/core';
 
 @Catch(QueryFailedError)
 export class QueryFailedExceptionFilter implements ExceptionFilter {
-  constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
+  constructor(private readonly httpAdapterHost: HttpAdapterHost) { }
 
   catch(exception: QueryFailedError, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
@@ -17,14 +17,14 @@ export class QueryFailedExceptionFilter implements ExceptionFilter {
 
     let httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Error interno del servidor';
-    let errorCode = null;
+    let errorCode = 'DATABASE_ERROR';
 
     if (exception.driverError) {
-      errorCode = (exception.driverError as any).code;
+      const driverErrorCode = (exception.driverError as any).code;
+      errorCode = driverErrorCode; // Usar el código del driver para el errorCode
 
-      switch (errorCode) {
-        // Violación de restricciones únicas
-        case '23505':
+      switch (driverErrorCode) {
+        case '23505': // Violación de restricciones únicas
           httpStatus = HttpStatus.CONFLICT;
           const detail = (exception.driverError as any).detail;
           const fieldMatch = detail.match(/\((.*?)\)=\((.*?)\)/);
@@ -33,24 +33,24 @@ export class QueryFailedExceptionFilter implements ExceptionFilter {
             const field = fieldMatch[1];
             const value = fieldMatch[2];
             message = `El valor '${value}' para el campo '${field}' ya está en uso.`;
+            errorCode = 'UNIQUE_CONSTRAINT_VIOLATION';
           } else {
             message = 'El recurso ya existe.';
           }
           break;
 
-        // Violación de restricciones de longitud de datos
-        case '22001':
+        case '22001': // Violación de restricciones de longitud de datos
           httpStatus = HttpStatus.BAD_REQUEST;
           message = 'El valor ingresado es demasiado largo para un campo.';
+          errorCode = 'DATA_TOO_LONG';
           break;
 
-        // Clave externa violada
-        case '23503':
+        case '23503': // Clave externa violada
           httpStatus = HttpStatus.BAD_REQUEST;
           message = 'Violación de clave externa, el registro relacionado no existe.';
+          errorCode = 'FOREIGN_KEY_VIOLATION';
           break;
 
-        // Otros errores personalizados pueden agregarse aquí
         default:
           message = exception.driverError.message || exception.message;
           break;
@@ -63,6 +63,7 @@ export class QueryFailedExceptionFilter implements ExceptionFilter {
     const responseBody = {
       statusCode: httpStatus,
       errorType: exception.constructor.name,
+      errorCode,
       timestamp: new Date().toISOString(),
       path: httpAdapter.getRequestUrl(ctx.getRequest()),
       message,

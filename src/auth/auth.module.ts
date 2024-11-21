@@ -10,6 +10,7 @@ import { RolesPermissionsModule } from 'src/modules/roles-permissions/roles-perm
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MailModule } from 'src/mail/mail.module';
 import { UserResetPasswordCode } from './entities/user-reset-password.entity';
+
 @Module(
   {
     imports: [

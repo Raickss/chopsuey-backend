@@ -6,22 +6,22 @@ export class PostgresConfigService {
   constructor(private configService: ConfigService) {}
 
   get host(): string {
-    return this.configService.get<string>('database.host');
+    return this.configService.get<string>('DB_HOST');
   }
 
   get port(): number {
-    return Number(this.configService.get<number>('database.port'));
+    return Number(this.configService.get<number>('DB_PORT'));
   }
 
   get username(): string {
-    return this.configService.get<string>('database.username');
+    return this.configService.get<string>('DB_USERNAME');
   }
 
   get password(): string {
-    return this.configService.get<string>('database.password');
+    return this.configService.get<string>('DB_PASSWORD');
   }
 
   get database(): string {
-    return this.configService.get<string>('database.database');
+    return this.configService.get<string>('DB_NAME');
   }
 }

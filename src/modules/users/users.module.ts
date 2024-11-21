@@ -5,10 +5,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity'; 
 import { MailModule } from 'src/mail/mail.module';
 import { Role } from '../roles/role.entity';
+import { RolesModule } from '../roles/roles.module';
+
 
 @Module({
   imports: [
     MailModule,
+    RolesModule,
     TypeOrmModule.forFeature(
       [
         User,

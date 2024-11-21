@@ -24,6 +24,19 @@ export class RolesPermissionsService {
         return await this.rolesPermissionsRepository.find({
             relations: ['role', 'permission'],
         });
+    }  
+
+    async getPermissionsByRole(roleId: number): Promise<string[]> {
+        const role = await this.rolesRepository.findOne({
+            where: { id: roleId },
+            relations: ['rolePermissions', 'rolePermissions.permission'],
+        });
+
+        if (!role) {
+            throw new NotFoundException(`Role with ID ${roleId} not found`);
+        }
+
+        return role.rolePermissions.map(rp => rp.permission.permissionName);
     }
 
     async assignPermissionsToRole(data: RolePermissionDto): Promise<void> {
@@ -37,7 +50,6 @@ export class RolesPermissionsService {
             const permissionRepository = queryRunner.manager.getRepository(Permission);
             const rolePermissionRepository = queryRunner.manager.getRepository(RolePermission);
     
-            // Usar el servicio RolesService para buscar el rol y lanzar una excepción si no se encuentra
             const role = await this.rolesService.findOne(roleId);
     
             const permissions = await permissionRepository.find({
@@ -90,20 +102,7 @@ export class RolesPermissionsService {
         } finally {
             await queryRunner.release();
         }
-    }    
-
-    async getPermissionsByRole(roleId: number): Promise<string[]> {
-        const role = await this.rolesRepository.findOne({
-            where: { id: roleId },
-            relations: ['rolePermissions', 'rolePermissions.permission'],
-        });
-
-        if (!role) {
-            throw new NotFoundException(`Role with ID ${roleId} not found`);
-        }
-
-        return role.rolePermissions.map(rp => rp.permission.permissionName);
-    }
+    }  
 
     async updatePermissionsForRole(rolePermissionDto: RolePermissionDto): Promise<void> {
         const { roleId, permissionIds } = rolePermissionDto;
@@ -116,10 +115,8 @@ export class RolesPermissionsService {
             const rolePermissionRepository = queryRunner.manager.getRepository(RolePermission);
             const permissionRepository = queryRunner.manager.getRepository(Permission);
 
-            // Usar el servicio RolesService para buscar el rol y lanzar una excepción si no se encuentra
             const role = await this.rolesService.findOne(roleId);
 
-            // Eliminar permisos actuales del rol
             const existingRolePermissions = await rolePermissionRepository.find({
                 where: { role: { id: roleId } },
             });
@@ -128,7 +125,6 @@ export class RolesPermissionsService {
                 await rolePermissionRepository.remove(existingRolePermissions);
             }
 
-            // Asignar nuevos permisos
             const permissions = await permissionRepository.find({
                 where: { id: In(permissionIds) },
             });
@@ -159,7 +155,7 @@ export class RolesPermissionsService {
         }
     }
 
-    async removePermissionsFromRole(rolePermissionDto: RolePermissionDto): Promise<void> {
+    async removeSpecificPermissionsFromRole(rolePermissionDto: RolePermissionDto): Promise<void> {
         const { roleId, permissionIds } = rolePermissionDto;
     
         const queryRunner = this.rolesPermissionsRepository.manager.connection.createQueryRunner();
@@ -170,10 +166,11 @@ export class RolesPermissionsService {
             const rolePermissionRepository = queryRunner.manager.getRepository(RolePermission);
             const permissionRepository = queryRunner.manager.getRepository(Permission);
     
-            // Usar el servicio RolesService para verificar que el rol existe
             const role = await this.rolesService.findOne(roleId);
+            if (!role) {
+                throw new NotFoundException(`Role con ID ${roleId} no encontrado.`);
+            }
     
-            // Verificar si los permisos existen en la base de datos
             const permissions = await permissionRepository.find({
                 where: { id: In(permissionIds) },
             });
@@ -186,15 +183,18 @@ export class RolesPermissionsService {
                 );
             }
     
-            // Buscar las relaciones existentes entre el rol y los permisos
-            const rolePermissions = await rolePermissionRepository.find({
-                where: {
-                    role: { id: roleId },
-                    permission: In(permissionIds),
-                },
-            });
+            const rolePermissions = await rolePermissionRepository.createQueryBuilder('rolePermission')
+                .leftJoinAndSelect('rolePermission.permission', 'permission')
+                .where('rolePermission.roleId = :roleId', { roleId })
+                .andWhere('permission.id IN (:...permissionIds)', { permissionIds })
+                .getMany();
     
-            // Verificar si alguno de los permisos no está enlazado con el rol
+            if (!rolePermissions || rolePermissions.length === 0) {
+                throw new NotFoundException(
+                    `No se encontraron relaciones entre el rol con ID ${roleId} y los permisos especificados.`
+                );
+            }
+    
             const existingPermissionIds = rolePermissions.map((rp) => rp.permission.id);
             const notLinkedPermissions = permissionIds.filter(id => !existingPermissionIds.includes(id));
     
@@ -204,31 +204,25 @@ export class RolesPermissionsService {
                 );
             }
     
-            // Eliminar los permisos que están enlazados con el rol
             await rolePermissionRepository.remove(rolePermissions);
     
-            // Confirmar la transacción
             await queryRunner.commitTransaction();
         } catch (error) {
-            // Revertir la transacción en caso de error
             await queryRunner.rollbackTransaction();
             throw error;
         } finally {
-            // Liberar el QueryRunner
             await queryRunner.release();
         }
-    }         
+    }             
 
-    async clearPermissionsForRole(roleId: number): Promise<void> {
+    async removeAllPermissionsFromRole(roleId: number): Promise<void> {
         const queryRunner = this.rolesPermissionsRepository.manager.connection.createQueryRunner();
         await queryRunner.connect();
         await queryRunner.startTransaction();
     
         try {
-            // Usar el servicio RolesService para buscar el rol y lanzar una excepción si no se encuentra
             const role = await this.rolesService.findOne(roleId);
     
-            // Buscar todos los permisos enlazados con el rol
             const rolePermissions = await queryRunner.manager.getRepository(RolePermission).find({
                 where: { role: { id: roleId } },
             });
@@ -237,19 +231,14 @@ export class RolesPermissionsService {
                 throw new NotFoundException(`No se encontraron permisos para el rol con ID ${roleId}.`);
             }
     
-            // Eliminar los permisos enlazados al rol
             await queryRunner.manager.getRepository(RolePermission).remove(rolePermissions);
     
-            // Confirmar la transacción
             await queryRunner.commitTransaction();
         } catch (error) {
-            // Revertir la transacción en caso de error
             await queryRunner.rollbackTransaction();
             throw error;
         } finally {
-            // Liberar el QueryRunner
             await queryRunner.release();
         }
     }
-
 }

@@ -5,12 +5,13 @@ import {
     OneToMany
 } from "typeorm";
 import { RolePermission } from "../roles-permissions/role-permission.entity";
+
 @Entity('permission')
 export class Permission {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column({ unique: true })
     permissionName: string;
 
     @Column()

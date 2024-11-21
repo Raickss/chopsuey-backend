@@ -11,13 +11,19 @@ async function bootstrap() {
   const httpAdapterHost = app.get(HttpAdapterHost);
   const appConfig = app.get(AppConfigService);
 
+  app.enableCors({
+    origin: true, // Permite todos los orígenes (útil solo en desarrollo)
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true
+  });  
+
   app.useGlobalPipes(new ValidationPipe());
-  
   
   app.useGlobalFilters(
     new AllExceptionsFilter(httpAdapterHost),
     new QueryFailedExceptionFilter(httpAdapterHost)
   );
+  
 
   await app.listen(appConfig.port);
 }

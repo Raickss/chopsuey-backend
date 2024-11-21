@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -9,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { RolesPermissionsModule } from './modules/roles-permissions/roles-permissions.module';
 import { RolesModule } from './modules/roles/roles.module';
+import { CacheConfigModule } from './config/caching/config.module';
 
 @Module({
   imports: [
@@ -18,9 +18,12 @@ import { RolesModule } from './modules/roles/roles.module';
     UsersModule,
     MailModule,
     RolesPermissionsModule,
-    RolesModule
+    RolesModule,
+    CacheConfigModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService
+  ],
 })
 export class AppModule {}

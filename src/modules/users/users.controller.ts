@@ -4,13 +4,40 @@ import { User } from './user.entity';
 import { UserDto } from './dtos/user.dto';
 import { PartialUpdateUserDto } from './dtos/parcial-update-user.dto';
 import { AccessTokenGuard } from 'src/common/guards/access-token.guard';
+import { RequiredPermissions } from 'src/common/decorators/permission.decorator';
+import { Permissions } from 'src/common/guards/enums/permissions.enum';
 
 @Controller('users')
+@UseGuards(AccessTokenGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @UseGuards(AccessTokenGuard)
+  @Get()
+  @RequiredPermissions(Permissions.user.fetchAllUsers)
+  async findAll(): Promise<User[]> {
+    return this.usersService.findAll();
+  }
+
+  @Get('id/:userId')
+  @RequiredPermissions(Permissions.user.findUserById)
+  async findById(@Param('userId', ParseIntPipe) userId: number): Promise<User> {
+    return this.usersService.findById(userId);
+  }
+
+  @Get('username/:username')
+  @RequiredPermissions(Permissions.user.findUserByUsername)
+  async findByUserName(@Param('username') username: string): Promise<User> {
+    return this.usersService.findByUsername(username);
+  }
+
+  @Get('email/:email')
+  @RequiredPermissions(Permissions.user.findUserByEmail)
+  async findByEmail(@Param('email') email: string): Promise<User> {
+    return this.usersService.findByEmail(email);
+  }
+
   @Post()
+  @RequiredPermissions(Permissions.user.createUser)
   @HttpCode(HttpStatus.CREATED)
   async createUser(
     @Body() createUserDto: UserDto,
@@ -18,52 +45,28 @@ export class UsersController {
     return await this.usersService.create(createUserDto);
   }
 
-  @UseGuards(AccessTokenGuard)
-  @Get()
-  async findAll(): Promise<User[]> {
-    return this.usersService.findAll();
-  }
-
-  @UseGuards(AccessTokenGuard)
-  @Get(':userid')
-  async findById(@Param('userid', ParseIntPipe) userId: number): Promise<User> {
-    return this.usersService.findById(userId);
-  }
-
-  @UseGuards(AccessTokenGuard)
-  @Get(':username')
-  async findByUserName(@Param('username') username: string): Promise<User> {
-    return this.usersService.findByUsername(username);
-  }
-
-  @UseGuards(AccessTokenGuard)
-  @Get(':email')
-  async findByEmail(@Param('email') email: string): Promise<User> {
-    return this.usersService.findByEmail(email);
-  }
-
-  @UseGuards(AccessTokenGuard)
-  @Patch(':id')
+  @Patch(':userId')
+  @RequiredPermissions(Permissions.user.updateUser)
   async updateUser(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('userId', ParseIntPipe) userId: number,
     @Body() updateUserDto: PartialUpdateUserDto
   ): Promise<User> {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(userId, updateUserDto);
   }
 
-  @UseGuards(AccessTokenGuard)
   @Put(':userId/role/:roleId')
+  @RequiredPermissions(Permissions.user.assignRole)
   async assignRole(
     @Param('userId', ParseIntPipe) userId: number,
     @Param('roleId', ParseIntPipe) roleId: number,
   ): Promise<User> {
     return await this.usersService.assignRoleToUser(userId, roleId);
   }
-
-  @UseGuards(AccessTokenGuard)
+  
+  @Delete(':userId')
   @HttpCode(HttpStatus.OK)
-  @Delete(':id')
-  async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.usersService.remove(id);
+  @RequiredPermissions(Permissions.user.removeUser)
+  async delete(@Param('userId', ParseIntPipe) userId: number): Promise<void> {
+    return this.usersService.remove(userId);
   }
 }

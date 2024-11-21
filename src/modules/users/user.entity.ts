@@ -7,11 +7,10 @@ import {
     UpdateDateColumn,
     OneToMany
 } from "typeorm";
-import { DocumentType } from "./enums/document-type.enum"; 
-import { Gender } from "./enums/gender.enum"; 
+import { DocumentType } from "./enums/document-type.enum";
+import { Gender } from "./enums/gender.enum";
 import { Role } from "src/modules/roles/role.entity";
 import { UserResetPasswordCode } from "src/auth/entities/user-reset-password.entity";
-
 
 @Entity('user')
 export class User {
@@ -51,7 +50,7 @@ export class User {
     @Column({ type: 'date', nullable: true })
     birthDate: Date;
 
-    @ManyToOne(() => Role, (role) => role.users)
+    @ManyToOne(() => Role, (role) => role.users, { onDelete: 'SET NULL' })
     role: Role;
 
     @Column({ type: 'varchar', length: 50, unique: true })
