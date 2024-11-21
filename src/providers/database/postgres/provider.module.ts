@@ -1,7 +1,12 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule, TypeOrmModuleAsyncOptions } from "@nestjs/typeorm";
+import { UserResetPasswordCode } from "src/auth/entities/user-reset-password.entity";
 import { PostgresConfigModule } from "src/config/database/postgres/config.module";
 import { PostgresConfigService } from "src/config/database/postgres/config.service";
+import { Permission } from "src/modules/permissions/permission.entity";
+import { RolePermission } from "src/modules/roles-permissions/role-permission.entity";
+import { Role } from "src/modules/roles/role.entity";
+import { User } from "src/modules/users/user.entity";
 
 @Module({
   imports: [
@@ -14,10 +19,12 @@ import { PostgresConfigService } from "src/config/database/postgres/config.servi
         username: PostgresConfigService.username,
         password: PostgresConfigService.password,
         database: PostgresConfigService.database,
-        entities: [__dirname + '/../../../../**/*.entity.{ts,js}'], // Soporta tanto .ts como .js
-        synchronize: false, // Desactivado para producción
-        migrations: [__dirname + '/../../../../migrations/*.{ts,js}'], // Opcional: usa migraciones
-        migrationsRun: true, // Ejecuta migraciones automáticamente al iniciar
+        // entities: [__dirname + '/../../../../**/*.entity.{ts,js}'],
+        // entities: [__dirname + '../../modules/**/*.entity.js'],
+        entities: [User, Role, RolePermission, Permission, UserResetPasswordCode],
+        synchronize: false,
+        migrationsRun: true,
+
       }),
       inject: [PostgresConfigService],
     } as TypeOrmModuleAsyncOptions),
